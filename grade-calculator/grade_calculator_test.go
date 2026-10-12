@@ -49,3 +49,87 @@ func TestGetGradeF(t *testing.T) {
 		t.Errorf("Expected GetGrade to return '%s'; got '%s' instead", expected_value, actual_value)
 	}
 }
+
+// Part 4: The table checks the exact letter-grade thresholds, including both
+// sides of the C/D boundary that determines passing status.
+func TestLetterGradeBoundaries(t *testing.T) {
+	testCases := []struct {
+		score    int
+		expected string
+	}{
+		{0, "F"}, {59, "F"}, {60, "D"}, {69, "D"},
+		{70, "C"}, {79, "C"}, {80, "B"}, {89, "B"},
+		{90, "A"}, {100, "A"},
+	}
+
+	for _, tc := range testCases {
+		calculator := NewGradeCalculator()
+		calculator.AddGrade("assignment", tc.score, Assignment)
+		calculator.AddGrade("exam", tc.score, Exam)
+		calculator.AddGrade("essay", tc.score, Essay)
+		if got := calculator.GetFinalGrade(); got != tc.expected {
+			t.Errorf("uniform score %d: expected %s, got %s", tc.score, tc.expected, got)
+		}
+	}
+}
+
+func TestCategoryWeightsAndEssayIndependence(t *testing.T) {
+	calculator := NewGradeCalculator()
+	calculator.AddGrade("assignment", 100, Assignment)
+	calculator.AddGrade("exam", 100, Exam)
+	calculator.AddGrade("essay", 0, Essay)
+
+	// 100(0.50) + 100(0.35) + 0(0.15) = 85 -> B.
+	if got := calculator.GetFinalGrade(); got != "B" {
+		t.Errorf("expected B when essay score is zero; got %s", got)
+	}
+}
+
+func TestAverageMultipleGradesWithinEachCategory(t *testing.T) {
+	calculator := NewGradeCalculator()
+	calculator.AddGrade("assignment 1", 100, Assignment)
+	calculator.AddGrade("assignment 2", 0, Assignment)
+	calculator.AddGrade("exam 1", 100, Exam)
+	calculator.AddGrade("exam 2", 100, Exam)
+	calculator.AddGrade("essay 1", 100, Essay)
+	calculator.AddGrade("essay 2", 100, Essay)
+
+	// Assignments average 50; exams and essays average 100 -> 75 -> C.
+	if got := calculator.GetFinalGrade(); got != "C" {
+		t.Errorf("expected C when assignment scores average 50; got %s", got)
+	}
+}
+
+func TestNoGradesAndMissingCategories(t *testing.T) {
+	t.Run("no grades", func(t *testing.T) {
+		calculator := NewGradeCalculator()
+		if got := calculator.GetFinalGrade(); got != "F" {
+			t.Errorf("expected F for no recorded grades; got %s", got)
+		}
+	})
+
+	t.Run("only assignments", func(t *testing.T) {
+		calculator := NewGradeCalculator()
+		calculator.AddGrade("assignment", 100, Assignment)
+		// Missing exams and essays contribute zero under the assumed policy.
+		if got := calculator.GetFinalGrade(); got != "F" {
+			t.Errorf("expected F when only 50%% category is present; got %s", got)
+		}
+	})
+}
+
+func TestGradeTypeString(t *testing.T) {
+	for _, tc := range []struct {
+		gradeType GradeType
+		expected  string
+	}{
+		{Assignment, "assignment"},
+		{Exam, "exam"},
+		{Essay, "essay"},
+		{GradeType(-1), ""},
+	} {
+		if got := tc.gradeType.String(); got != tc.expected {
+			t.Errorf("type %d: expected %q, got %q", tc.gradeType, tc.expected, got)
+		}
+	}
+}
