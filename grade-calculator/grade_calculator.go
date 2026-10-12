@@ -1,7 +1,8 @@
 package esepunittests
 
 type GradeCalculator struct {
-	grades []Grade
+	grades   []Grade
+	passFail bool
 }
 
 type GradeType int
@@ -30,6 +31,15 @@ type Grade struct {
 
 func NewGradeCalculator() *GradeCalculator {
 	return &GradeCalculator{grades: make([]Grade, 0)}
+}
+
+// NewPassFailGradeCalculator configures Pass/Fail output without changing the
+// existing NewGradeCalculator, AddGrade, or GetFinalGrade call signatures.
+func NewPassFailGradeCalculator() *GradeCalculator {
+	return &GradeCalculator{
+		grades:   make([]Grade, 0),
+		passFail: true,
+	}
 }
 
 func (gc *GradeCalculator) GetFinalGrade() string {
