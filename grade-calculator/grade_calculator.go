@@ -1,9 +1,7 @@
 package esepunittests
 
 type GradeCalculator struct {
-	assignments []Grade
-	exams       []Grade
-	essays      []Grade
+	grades []Grade
 }
 
 type GradeType int
@@ -31,11 +29,7 @@ type Grade struct {
 }
 
 func NewGradeCalculator() *GradeCalculator {
-	return &GradeCalculator{
-		assignments: make([]Grade, 0),
-		exams:       make([]Grade, 0),
-		essays:      make([]Grade, 0),
-	}
+	return &GradeCalculator{grades: make([]Grade, 0)}
 }
 
 func (gc *GradeCalculator) GetFinalGrade() string {
@@ -55,45 +49,33 @@ func (gc *GradeCalculator) GetFinalGrade() string {
 }
 
 func (gc *GradeCalculator) AddGrade(name string, grade int, gradeType GradeType) {
+	// Preserve the original API's behavior: silently ignore unknown grade types.
 	switch gradeType {
-	case Assignment:
-		gc.assignments = append(gc.assignments, Grade{
+	case Assignment, Exam, Essay:
+		gc.grades = append(gc.grades, Grade{
 			Name:  name,
 			Grade: grade,
-			Type:  Assignment,
-		})
-	case Exam:
-		gc.exams = append(gc.exams, Grade{
-			Name:  name,
-			Grade: grade,
-			Type:  Exam,
-		})
-	case Essay:
-		gc.essays = append(gc.essays, Grade{
-			Name:  name,
-			Grade: grade,
-			Type:  Essay,
+			Type:  gradeType,
 		})
 	}
 }
 
 func (gc *GradeCalculator) calculateNumericalGrade() float64 {
-	assignmentAverage := computeAverage(gc.assignments)
-	examAverage := computeAverage(gc.exams)
-	essayAverage := computeAverage(gc.essays)
+	var sums [3]int
+	var counts [3]int
 
-	return assignmentAverage*0.50 + examAverage*0.35 + essayAverage*0.15
-}
-
-func computeAverage(grades []Grade) float64 {
-	if len(grades) == 0 {
-		return 0
+	for _, grade := range gc.grades {
+		category := int(grade.Type)
+		sums[category] += grade.Grade
+		counts[category]++
 	}
 
-	sum := 0
-	for _, grade := range grades {
-		sum += grade.Grade
+	weights := [3]float64{0.50, 0.35, 0.15}
+	total := 0.0
+	for category, weight := range weights {
+		if counts[category] > 0 {
+			total += float64(sums[category]) / float64(counts[category]) * weight
+		}
 	}
-
-	return float64(sum) / float64(len(grades))
+	return total
 }
