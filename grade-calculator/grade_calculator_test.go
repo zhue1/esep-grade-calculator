@@ -133,3 +133,44 @@ func TestGradeTypeString(t *testing.T) {
 		}
 	}
 }
+
+// Part 7: Specify the new behavior before adding its implementation.
+// Existing calls to NewGradeCalculator and AddGrade remain unchanged.
+func TestPassFailBoundary(t *testing.T) {
+	for _, tc := range []struct {
+		score    int
+		expected string
+	}{
+		{0, "Fail"}, {69, "Fail"}, {70, "Pass"}, {100, "Pass"},
+	} {
+		calculator := NewPassFailGradeCalculator()
+		calculator.AddGrade("assignment", tc.score, Assignment)
+		calculator.AddGrade("exam", tc.score, Exam)
+		calculator.AddGrade("essay", tc.score, Essay)
+		if got := calculator.GetFinalGrade(); got != tc.expected {
+			t.Errorf("Pass/Fail score %d: expected %s, got %s", tc.score, tc.expected, got)
+		}
+	}
+}
+
+func TestPassFailUsesWeightedGrade(t *testing.T) {
+	calculator := NewPassFailGradeCalculator()
+	calculator.AddGrade("assignment", 100, Assignment)
+	calculator.AddGrade("exam", 50, Exam)
+	calculator.AddGrade("essay", 0, Essay)
+
+	// 100(0.50) + 50(0.35) + 0(0.15) = 67.5 -> Fail.
+	if got := calculator.GetFinalGrade(); got != "Fail" {
+		t.Errorf("expected Fail for weighted score 67.5; got %s", got)
+	}
+}
+
+func TestPassFailDoesNotChangeLetterGradeMode(t *testing.T) {
+	calculator := NewGradeCalculator()
+	calculator.AddGrade("assignment", 70, Assignment)
+	calculator.AddGrade("exam", 70, Exam)
+	calculator.AddGrade("essay", 70, Essay)
+	if got := calculator.GetFinalGrade(); got != "C" {
+		t.Errorf("existing constructor should preserve letter grades; got %s", got)
+	}
+}
