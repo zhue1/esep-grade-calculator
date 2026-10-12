@@ -45,4 +45,10 @@ Within each category, grades are equally weighted. The intended course weighting
 
 ## Known issues in the inherited version
 
-At the time of the Part 2 documentation-only commit, the supplied implementation incorrectly averages slice indices rather than scores, uses the exam slice twice in the weighted calculation, and divides by zero on an empty category. The supplied `TestGetGradeF` also asserts an F for inputs that should produce an A. These issues are deliberately left unchanged in this **documentation-only** commit and corrected separately in Part 3.
+At the time of the Part 2 documentation-only commit, the supplied implementation incorrectly averages slice indices rather than scores, uses the exam slice twice in the weighted calculation, and divides by zero on an empty category. The supplied `TestGetGradeF` also asserts an F for inputs that should produce an A. These issues were deliberately left unchanged in the Part 2 **documentation-only** commit and corrected separately in Part 3.
+
+## Pass/Fail mode (Part 7 extra credit)
+
+The original public methods remain compatible. Use `NewGradeCalculator()` to return A/B/C/D/F, or `NewPassFailGradeCalculator()` to return `"Pass"` for a weighted score of 70 or above and `"Fail"` otherwise. This uses the same category weights and does not alter the grade-collection interface.
+
+The specification does not explicitly choose Pass/Fail output strings; this implementation adopts the full strings `"Pass"` and `"Fail"` as a documented assumption.
